@@ -279,6 +279,56 @@ fi
 
 systemsetup -setremotelogin on
 
+# Set TimeZone
+
+systemsetup -settimezone America/New_York
+
+# enable network time
+systemsetup -setusingnetworktime on
+systemsetup -setnetworktimeserver time.apple.com
+
+# enable location services
+/bin/launchctl unload /System/Library/LaunchDaemons/com.apple.locationd.plist
+uuid=$(/usr/sbin/system_profiler SPHardwareDataType | grep "Hardware UUID" | cut -c22-57)
+/usr/bin/defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd."$uuid" LocationServicesEnabled -int 1
+/usr/bin/defaults write /var/db/locationd/Library/Preferences/ByHost/com.apple.locationd.notbackedup."$uuid" LocationServicesEnabled -int 1
+/usr/sbin/chown -R _locationd:_locationd /var/db/locationd
+/bin/launchctl load /System/Library/LaunchDaemons/com.apple.locationd.plist
+
+# Turn the Firewall on
+
+defaults write /Library/Preferences/com.apple.alf globalstate -int 1
+defaults write /Library/Preferences/com.apple.alf loggingenabled -int 1
+defaults write /Library/Preferences/com.apple.alf stealthenabled -int 0
+
+# Set default  screensaver settings
+
+mkdir /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost
+
+
+# Disabling screensaver password requirement by commenting out this line - can be re-enabled later.
+#
+defaults write /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost/com.apple.screensaver.$MAC_UUID "askForPassword" -int 1
+#
+defaults write /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost/com.apple.screensaver.$MAC_UUID "askForPasswordDelay" -int 1
+
+defaults write /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost/com.apple.screensaver.$MAC_UUID "idleTime" -int 0.0
+
+defaults write /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost/com.apple.screensaver.$MAC_UUID "moduleName" -string "Flurry"
+
+defaults write /System/Library/User\ Template/English.lproj/Library/Preferences/ByHost/com.apple.screensaver.$MAC_UUID "modulePath" -string "/System/Library/Screen Savers/Flurry.saver"
+
+# Enable Remote Management
+# /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on -clientopts -setvnclegacy -vnclegacy yes -clientopts -setvncpw -vncpw (password) -users admin1,admin2 -privs -all -allowAccessFor -specifiedUsers -restart -agent -menu
+/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on -users admin1,admin2 -privs -all -restart -agent -menu
+#
+# Enable AirDrop over on all machines on all interfaces
+#
+
+/bin/echo "Enabling AirDrop..."
+/bin/date
+defaults write com.apple.NetworkBrowser BrowseAllInterfaces 1
+
 # Turn off Gatekeeper
 
 spctl --master-disable
